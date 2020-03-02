@@ -1,4 +1,4 @@
-#Program that calculates a confution matrix for a given neural network and testset
+#Program that calculates a confusion matrix for a given neural network and testset
 
 #imports
 #-----------------------------------------------------------------------
@@ -12,9 +12,6 @@ import os
 
 from tensorflow.python.platform import gfile
 from PIL import Image
-
-
-
 
 
 
