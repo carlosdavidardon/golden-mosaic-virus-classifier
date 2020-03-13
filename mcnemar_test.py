@@ -163,7 +163,7 @@ for img_file in list_ds:
 	img1 = np.expand_dims(img1, axis=0)
 	img1 = img1.reshape(1, IMG_WIDTH_1, IMG_HEIGHT_1, 3)
 
-	prediction1 = nn_model_1.predict_classes(img1)
+	prediction1 = nn_model_1.predict(img1)
 	#--------------------------------------------------------
 	
 	#for model 2
@@ -171,7 +171,7 @@ for img_file in list_ds:
 	img2 = np.expand_dims(img2, axis=0)
 	img2 = img2.reshape(1, IMG_WIDTH_2, IMG_HEIGHT_2, 3)
 
-	prediction2 = nn_model_2.predict_classes(img2)
+	prediction2 = nn_model_2.predict(img2)
 	#--------------------------------------------------------
 
 		
@@ -183,11 +183,11 @@ for img_file in list_ds:
 	model_2_result = 1
 	
 	#is model_1 correct?
-	if parent_dir[1].decode() != CLASS_NAMES[ prediction1[0] ]:			
+	if parent_dir[1].decode() != CLASS_NAMES[ np.argmax(prediction1[0]) ]:			
 		model_1_result = 0 #model_1 wrong
 	
 	#is model_2 correct?
-	if parent_dir[1].decode() != CLASS_NAMES[ prediction2[0] ]:			
+	if parent_dir[1].decode() != CLASS_NAMES[ np.argmax(prediction2[0]) ]:			
 		model_2_result = 0 #model_2 wrong
 	
 	#add results to list

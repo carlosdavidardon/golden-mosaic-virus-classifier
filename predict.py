@@ -68,13 +68,12 @@ img = tf.image.resize(img, [IMG_WIDTH, IMG_HEIGHT])
 img = np.expand_dims(img, axis=0)
 img = img.reshape(1, IMG_WIDTH, IMG_WIDTH, 3)
 
-prediction = nn_model.predict_classes(img)
-print( "Model prediction: " + CLASS_NAMES[ prediction[0] ] )
+prediction = nn_model.predict(img)
+print( "Model prediction: " + CLASS_NAMES[ np.argmax(prediction[0]) ] )
 print("------------")
 
 print("Probabilities:")
-probabilities = nn_model.predict(img)
 i = 0
-for p in probabilities[0]:
+for p in prediction[0]:
 	print( str(CLASS_NAMES[i])+ ":\t" + str(round(p*100, 7)) + "%")
 	i = i + 1

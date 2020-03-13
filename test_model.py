@@ -216,18 +216,17 @@ if FLAGS.mode == 'all' or FLAGS.mode == 'detailed':
 		img = np.expand_dims(img, axis=0)
 		img = img.reshape(1, IMG_WIDTH, IMG_WIDTH, 3)
 
-		prediction = nn_model.predict_classes(img)
-		probabilities = nn_model.predict(img)
+		prediction = nn_model.predict(img)
 		i = 0
 		img_probs = []
 		order_probs = {}
-		for p in probabilities[0]:
+		for p in prediction[0]:
 			img_probs.append( str(CLASS_NAMES[i])+ ":" + str(round(p*100, 7)) + "%" )
 			order_probs[CLASS_NAMES[i]]=(round(p*100, 3))
 			i = i + 1
 		order_probs = sorted( ((v,k) for k,v in order_probs.items()), reverse=True)
 		print(img_file)
-		print( "Model prediction: " + CLASS_NAMES[ prediction[0] ]+" - probabilities: "+str(img_probs)+" - top: "+str(order_probs))
+		print( "Model prediction: " + CLASS_NAMES[ np.argmax(prediction[0]) ]+" - probabilities: "+str(img_probs)+" - top: "+str(order_probs))
 		print("------------------------------------------------------")
 	
 	

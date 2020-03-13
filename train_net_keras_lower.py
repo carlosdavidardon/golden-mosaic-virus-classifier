@@ -240,7 +240,6 @@ def prepare_for_training(ds, cache=True, shuffle_buffer_size=1000,
 	
 	return ds
 	
-	
 
 #-----------------------------------------------------------------------
 def create_model():
@@ -268,16 +267,19 @@ def create_model():
 		base_model = tf.keras.models.Model(inputs=base_model.input, 
 											outputs=base_model.get_layer('mixed7').output)
 		
-	base_model.trainable = False
+	for layer in base_model.layers:
+		layer.trainable = False
 
-	model = tf.keras.models.Sequential()
-	model.add(base_model)
-	model.add(tf.keras.layers.GlobalAveragePooling2D())
 	
-
+	x = base_model.output
+	x = tf.keras.layers.GlobalAveragePooling2D()(x)
+	
 	if FLAGS.dropout > 0.0:
-		model.add(tf.keras.layers.Dropout(FLAGS.dropout))	
-	model.add(tf.keras.layers.Dense(len(CLASS_NAMES), activation='softmax'))
+		x = tf.keras.layers.Dropout(FLAGS.dropout)(x)
+	
+	predictions = tf.keras.layers.Dense(len(CLASS_NAMES), activation='softmax')(x)
+	
+	model = tf.keras.models.Model(inputs=base_model.inputs, outputs=predictions)
 	
 	if FLAGS.optimizer == 'rmsprop':
 		print("Optimizer: RMSProp")
@@ -290,6 +292,7 @@ def create_model():
 					  optimizer=tf.keras.optimizers.Adam(lr=FLAGS.learning_rate),
 					  metrics=['accuracy'])
 	return model
+
 	
 	
 #-----------------------------------------------------------------------
@@ -305,9 +308,7 @@ load_sample_metadata('train')
 load_sample_metadata('val')
 load_sample_metadata('test')
 
-
 nn_model = create_model()
-print("Neural network model created.")
 nn_model.summary()
 
 train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255,
@@ -349,6 +350,7 @@ if FLAGS.load_checkpoints_dir != None:
 	latest = tf.train.latest_checkpoint(FLAGS.load_checkpoints_dir)
 	nn_model.load_weights(latest)
 	print("Latest weights loaded from checkpoints")
+	
 
 
 callback_list = None
@@ -373,6 +375,34 @@ history = nn_model.fit(train_dataset,
 						callbacks=callback_list)
 
 
+# Fine tunning
+print("Fine-tunning")
+
+if FLAGS.arch == 'resnet':
+	for layer in nn_model.layers[:-16]:
+		layer.trainable = False
+			
+	for layer in nn_model.layers[-16:]:
+		layer.trainable = True
+elif FLAGS.arch == 'googlenet':
+	for layer in nn_model.layers[:-34]:
+		layer.trainable = False
+			
+	for layer in nn_model.layers[-34:]:
+		layer.trainable = True
+
+
+nn_model.compile(optimizer=tf.keras.optimizers.SGD(lr=FLAGS.learning_rate, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
+
+nn_model.summary()
+
+history2 = nn_model.fit(train_dataset,
+						epochs=5,
+						steps_per_epoch=STEPS_PER_EPOCH,
+						validation_data=val_dataset,
+						validation_steps=VAL_STEPS_PER_EPOCH)
+
+
 # Save the entire model to a HDF5 file.
 h5_file = None
 if FLAGS.trained_model_file == None:
@@ -389,11 +419,11 @@ print("Test accuracy:")
 nn_model.evaluate(test_dataset, steps=TEST_STEPS)
 
 
-acc = history.history['accuracy']
-val_acc = history.history['val_accuracy']
+acc = history.history['accuracy'] + history2.history['accuracy']
+val_acc = history.history['val_accuracy'] + history2.history['val_accuracy']
 
-loss = history.history['loss']
-val_loss = history.history['val_loss']
+loss = history.history['loss'] + history2.history['loss']
+val_loss = history.history['val_loss'] + history2.history['val_loss']
 
 
 #save log files

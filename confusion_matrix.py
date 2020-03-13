@@ -1,4 +1,4 @@
-#Program that calculates a confusion matrix for a given neural network and testset
+#Program that calculates a confution matrix for a given neural network and testset
 
 #imports
 #-----------------------------------------------------------------------
@@ -12,6 +12,9 @@ import os
 
 from tensorflow.python.platform import gfile
 from PIL import Image
+
+
+
 
 
 
@@ -133,7 +136,7 @@ for img_file in list_ds:
 	img = np.expand_dims(img, axis=0)
 	img = img.reshape(1, IMG_WIDTH, IMG_HEIGHT, 3)
 
-	prediction = nn_model.predict_classes(img)
+	prediction = nn_model.predict(img)
 	#--------------------------------------------------------
 		
 	img_path = img_file.numpy()
@@ -141,7 +144,7 @@ for img_file in list_ds:
 	parent_dir = os.path.split(dest_path[0])
 
 	#Add result to confusion matrix
-	predicted_class = CLASS_NAMES[ prediction[0] ]
+	predicted_class = CLASS_NAMES[ np.argmax(prediction[0]) ]
 	actual_class = parent_dir[1].decode()
 	
 	confusion_matrix[ (actual_class, predicted_class) ] = 1 + confusion_matrix[ (actual_class, predicted_class) ]
